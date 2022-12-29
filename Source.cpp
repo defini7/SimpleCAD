@@ -93,12 +93,10 @@ struct Circle : Shape
 	{
 		pge->DrawLine(vecNodes[0].pos, vecNodes[1].pos, olc::WHITE, 0xF0F0F0F0F);
 
-		nRadius = uint32_t((vecNodes[1].pos - vecNodes[0].pos).mag());
+		uint32_t nRadius = uint32_t((vecNodes[1].pos - vecNodes[0].pos).mag());
 
 		pge->DrawCircle(vecNodes[0].pos, nRadius);
 	}
-
-	uint32_t nRadius = 0;
 };
 
 struct Rect : Shape
