@@ -1,6 +1,4 @@
 #define OLC_PGE_APPLICATION
-
-// https://github.com/OneLoneCoder/olcPixelGameEngine
 #include "olcPixelGameEngine.h"
 
 constexpr int32_t NODE_SIZE = 12;
@@ -23,7 +21,6 @@ struct Shape
 	size_t nFilledNodes = 0;
 
 	bool bExpired = false;
-	bool bConnectNodes = true;
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) = 0;
 
@@ -64,8 +61,6 @@ struct Line : Shape
 	{
 		vecNodes.reserve(2);
 		nMaxNodes = 2;
-
-		bConnectNodes = false;
 	}
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) override
@@ -85,8 +80,6 @@ struct Circle : Shape
 	{
 		vecNodes.reserve(2);
 		nMaxNodes = 2;
-
-		bConnectNodes = true;
 	}
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) override
@@ -105,8 +98,6 @@ struct Rect : Shape
 	{
 		vecNodes.reserve(2);
 		nMaxNodes = 2;
-
-		bConnectNodes = false;
 	}
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) override
