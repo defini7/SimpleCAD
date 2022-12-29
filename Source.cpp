@@ -160,6 +160,18 @@ public:
 public:
 	bool OnUserCreate() override
 	{
+		vTop.x = ScreenWidth() / 2 - (ScreenWidth() / 2) % NODE_SIZE;
+		vTop.y = 0;
+
+		vBottom.x = vTop.x;
+		vBottom.y = ScreenHeight();
+
+		vLeft.x = 0;
+		vLeft.y = ScreenHeight() / 2 - (ScreenHeight() / 2) % NODE_SIZE;
+
+		vRight.x = ScreenWidth();
+		vRight.y = vLeft.y;
+
 		return true;
 	}
 
@@ -258,20 +270,6 @@ public:
 			for (int32_t y = 0; y < ScreenHeight(); y += NODE_SIZE)
 				Draw(x, y, olc::DARK_BLUE);
 
-		olc::vi2d vTop, vBottom, vLeft, vRight;
-
-		vTop.x = ScreenWidth() / 2 - (ScreenWidth() / 2) % NODE_SIZE;
-		vTop.y = 0;
-
-		vBottom.x = vTop.x;
-		vBottom.y = ScreenHeight();
-
-		vLeft.x = 0;
-		vLeft.y = ScreenHeight() / 2 - (ScreenHeight() / 2) % NODE_SIZE;
-
-		vRight.x = ScreenWidth();
-		vRight.y = vLeft.y;
-
 		DrawLine(vTop, vBottom, olc::GREY, 0xF0F0F0F0F);
 		DrawLine(vLeft, vRight, olc::GREY, 0xF0F0F0F0F);
 
@@ -300,6 +298,8 @@ public:
 
 private:
 	std::vector<Shape*> vecShapes;
+
+	olc::vi2d vTop, vBottom, vLeft, vRight;
 
 	Shape* temp = nullptr;
 	Node* selected = nullptr;
