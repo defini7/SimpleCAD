@@ -18,8 +18,6 @@ struct Shape
 	size_t nNodesCount;
 	size_t nMaxNodes;
 
-	size_t nFilledNodes = 0;
-
 	bool bExpired = false;
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) = 0;
