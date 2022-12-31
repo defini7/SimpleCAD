@@ -8,16 +8,14 @@ struct Shape;
 struct Node
 {
 	Shape* parent;
-	olc::vf2d pos;
+	olc::vi2d pos;
 };
 
 struct Shape
 {
 	std::vector<Node> vecNodes;
 
-	size_t nNodesCount;
 	size_t nMaxNodes;
-
 	bool bExpired = false;
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) = 0;
@@ -41,7 +39,7 @@ struct Shape
 			pge->FillCircle(n.pos, 2, olc::RED);
 	}
 
-	Node* HitNode(const olc::vf2d& vPos)
+	Node* HitNode(const olc::vi2d& vPos)
 	{
 		for (auto& n : vecNodes)
 		{
@@ -100,8 +98,8 @@ struct Rect : Shape
 
 	virtual void DrawYourself(olc::PixelGameEngine* pge) override
 	{
-		olc::vf2d p1 = vecNodes[0].pos;
-		olc::vf2d p2 = vecNodes[1].pos;
+		olc::vi2d p1 = vecNodes[0].pos;
+		olc::vi2d p2 = vecNodes[1].pos;
 
 		if (p1 > p2)
 			std::swap(p1, p2);
@@ -128,8 +126,8 @@ struct Curve : Shape
 			pge->DrawLine(vecNodes[0].pos, vecNodes[1].pos, olc::WHITE, 0xF0F0F0F0F);
 			pge->DrawLine(vecNodes[1].pos, vecNodes[2].pos, olc::WHITE, 0xF0F0F0F0F);
 
-			olc::vf2d op = vecNodes[0].pos;
-			olc::vf2d np = op;
+			olc::vi2d op = vecNodes[0].pos;
+			olc::vi2d np = op;
 
 			for (float t = 0.0f; t <= 1.0f; t += 0.01f)
 			{
@@ -156,6 +154,22 @@ public:
 	}
 
 public:
+	void DrawSelectedArea()
+	{
+		if (vSelectedArea.second != olc::vi2d(-1, -1))
+		{
+			olc::vi2d first = vSelectedArea.first;
+			olc::vi2d second = vSelectedArea.second;
+
+			if (first > second)
+				std::swap(first, second);
+
+			SetPixelMode(olc::Pixel::ALPHA);
+			FillRect(first, second - first, olc::Pixel(255, 255, 255, 122));
+			SetPixelMode(olc::Pixel::NORMAL);
+		}
+	}
+
 	bool OnUserCreate() override
 	{
 		vTop.x = ScreenWidth() / 2 - (ScreenWidth() / 2) % NODE_SIZE;
@@ -183,34 +197,34 @@ public:
 
 		if (GetKey(olc::Key::L).bPressed)
 		{
-			temp = new Line();
+			tempShape = new Line();
 
-			selected = temp->GetNextNode(vCursor);
-			selected = temp->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
 		}
 
 		if (GetKey(olc::Key::C).bPressed)
 		{
-			temp = new Circle();
+			tempShape = new Circle();
 
-			selected = temp->GetNextNode(vCursor);
-			selected = temp->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
 		}
 
 		if (GetKey(olc::Key::R).bPressed)
 		{
-			temp = new Rect();
+			tempShape = new Rect();
 
-			selected = temp->GetNextNode(vCursor);
-			selected = temp->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
 		}
 
 		if (GetKey(olc::Key::B).bPressed)
 		{
-			temp = new Curve();
+			tempShape = new Curve();
 
-			selected = temp->GetNextNode(vCursor);
-			selected = temp->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
+			selected = tempShape->GetNextNode(vCursor);
 		}
 
 		if (GetMouse(1).bPressed)
@@ -225,14 +239,44 @@ public:
 					break;
 				}
 			}
+
+			if (!selected)
+			{
+				vSelectedArea.first = vCursor;
+				vSelectedArea.second = { -1, -1 };
+			}
+		}
+
+		if (GetMouse(1).bHeld)
+		{
+			if (!selected)
+				vSelectedArea.second = vCursor;
 		}
 
 		if (GetKey(olc::Key::D).bPressed)
 		{
-			if (temp)
+			if (vSelectedArea.second != olc::vi2d(-1, -1))
 			{
-				delete temp;
-				temp = nullptr;
+				for (int32_t x = vSelectedArea.first.x; x <= vSelectedArea.second.x; x += NODE_SIZE)
+					for (int32_t y = vSelectedArea.first.y; y <= vSelectedArea.second.y; y += NODE_SIZE)
+					{
+						for (const auto& shape : vecShapes)
+						{
+							Node* node = shape->HitNode({ x, y });
+
+							if (node)
+								node->parent->bExpired = true;
+						}
+					}
+				
+				vSelectedArea.first = { -1, -1 };
+				vSelectedArea.second = { -1, -1 };
+			}
+
+			if (tempShape)
+			{
+				delete tempShape;
+				tempShape = nullptr;
 			}
 			else
 			{
@@ -249,13 +293,13 @@ public:
 
 		if (GetMouse(0).bReleased)
 		{
-			if (temp)
+			if (tempShape)
 			{
-				selected = temp->GetNextNode(vCursor);
+				selected = tempShape->GetNextNode(vCursor);
 				if (!selected)
 				{
-					vecShapes.push_back(temp);
-					temp = nullptr;
+					vecShapes.push_back(tempShape);
+					tempShape = nullptr;
 				}
 			}
 			else
@@ -285,11 +329,13 @@ public:
 			shape->DrawNodes(this);
 		}
 
-		if (temp)
+		if (tempShape)
 		{
-			temp->DrawYourself(this);
-			temp->DrawNodes(this);
+			tempShape->DrawYourself(this);
+			tempShape->DrawNodes(this);
 		}
+
+		DrawSelectedArea();
 
 		return true;
 	}
@@ -299,8 +345,10 @@ private:
 
 	olc::vi2d vTop, vBottom, vLeft, vRight;
 
-	Shape* temp = nullptr;
+	Shape* tempShape = nullptr;
 	Node* selected = nullptr;
+
+	std::pair<olc::vi2d, olc::vi2d> vSelectedArea;
 	
 };
 
